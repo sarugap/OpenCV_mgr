@@ -1,88 +1,114 @@
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include "opencv2/opencv.hpp"
 #include <iostream>
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
+
+#define ImageResizeCoef 4
 
 using namespace cv;
 using namespace std;
 
- int main( int argc, char** argv )
- {
-    VideoCapture cap(0); //capture the video from web cam
+void CreateGUI(void);
 
-    if ( !cap.isOpened() )  // if not success, exit program
-    {
-         cout << "Cannot open the web cam" << endl;
-         return -1;
-    }
+Mat	element;
 
-    namedWindow("Control", CV_WINDOW_AUTOSIZE); //create a window called "Control"
+Mat gOrginalImage,
+	gGreyImage,
+	gGaussBlurImage,
+	gCannyEdgeImage,
+	gColor_dst,
+	hHSVImageBase,
+	gRGBImage[3],
+	gHSVImage[3],
+	gEqualizationHist[3],
+	gThresholdImage[3];
+		
+/* H range [0-179]*/
+int iLowH = 98;
+int iHighH = 122;
 
- int iLowH = 0;
- int iHighH = 179;
+/* S range [0-255]*/
+int iLowS = 140; 
+int iHighS = 255;
 
- int iLowS = 0; 
- int iHighS = 255;
+/* V range [0-255]*/
+int iLowV = 115; 
+int iHighV = 232;
 
- int iLowV = 0;
- int iHighV = 255;
+/* Image resolution */
+int H_res;
+int W_res;
 
- //Create trackbars in "Control" window
- cvCreateTrackbar("LowH", "Control", &iLowH, 179); //Hue (0 - 179)
- cvCreateTrackbar("HighH", "Control", &iHighH, 179);
+/* Median filter */
+unsigned int MedFilter = 3;
+unsigned int StartStop = 0;
+unsigned int temp_pause  = 0;
 
- cvCreateTrackbar("LowS", "Control", &iLowS, 255); //Saturation (0 - 255)
- cvCreateTrackbar("HighS", "Control", &iHighS, 255);
+int main( int argc, char** argv )
+{
+	CreateGUI();
 
- cvCreateTrackbar("LowV", "Control", &iLowV, 255); //Value (0 - 255)
- cvCreateTrackbar("HighV", "Control", &iHighV, 255);
+	//Load image
+	gOrginalImage = imread("D:/Rozpoznawanie znakow drogowych/TSR-zdjecia/IMG_20160914_175427.jpg");
 
-    while (true)
-    {
-        Mat imgOriginal;
+	if(gOrginalImage.empty())
+	{
+		cout <<"Invalid path to image!" <<endl;
+		getchar();
+		return -1;
+	}
 
-        bool bSuccess = cap.read(imgOriginal); // read a new frame from video
+	//Resize the original image
+	H_res = gOrginalImage.rows;
+	W_res = gOrginalImage.cols;
+	resize(gOrginalImage, gOrginalImage, Size(W_res/ImageResizeCoef, H_res/ImageResizeCoef));
+	imshow("Original image", gOrginalImage); 
 
-         if (!bSuccess) //if not success, break loop
-        {
-             cout << "Cannot read a frame from video stream" << endl;
-             break;
-        }
+	//Image preprocesing
+	split(gOrginalImage,gRGBImage);
 
-  Mat imgHSV;
-  //IplImage* image2 = cvCloneImage(&(IplImage)imgOriginal);
-  
-  cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
- 
-  Mat imgThresholded;	
+	//Histogram equalization
+	equalizeHist(gRGBImage[0], gEqualizationHist[0]);
+	equalizeHist(gRGBImage[1], gEqualizationHist[1]);
+	equalizeHist(gRGBImage[2], gEqualizationHist[2]);
 
-  inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
-      
-  //morphological opening (remove small objects from the foreground)
-  erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-  dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) ); 
+	//Merge 3 matrix into 1 matrix
+	merge(gEqualizationHist, 3, gRGBImage[0]);
+	imshow("Histogram eqaulization", gRGBImage[0]); 
 
-  //morphological closing (fill small holes in the foreground)
-  dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) ); 
-  erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+	//Convert image from BGR to HSV
+	cvtColor(gRGBImage[0], hHSVImageBase, CV_BGR2HSV);
 
-  imshow("Thresholded Image", imgThresholded); //show the thresholded image
+	//Split each channel
+	split(hHSVImageBase, gHSVImage);
 
-    line(imgOriginal,
-         Point2i(0, 0), 
-         Point2i(100, 100), 
-         Scalar(255, 255, 255), 10, 8, CV_AA);
+	while(1)
+	{
+		//Threshold the HSV image
+		inRange(hHSVImageBase, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), gThresholdImage[0]); 
+		imshow("Thresholded image", gThresholdImage[0]); 
 
-  imshow("Original", imgOriginal); //show the original image
-
-  //line(imgOriginal, Point2i(0,0), Point2i(100,100), cvScalar(255,0,0),4);
-
-        if (waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
-       {
-            cout << "esc key is pressed by user" << endl;
-            break; 
-       }
-    }
-
-   return 0;
-
+		if(waitKey(10) == 27) break;
+	}
+    return 0;
 }
+
+void CreateGUI(void)
+{
+	//Create windows 
+	namedWindow("Original image", WINDOW_AUTOSIZE); 
+	namedWindow("Histogram eqaulization", WINDOW_AUTOSIZE);
+	namedWindow("Thresholded image", WINDOW_AUTOSIZE); 
+	//namedWindow("Median filter image", WINDOW_AUTOSIZE); 
+	namedWindow("Control", CV_WINDOW_AUTOSIZE);
+
+	//Create trackbars
+	cvCreateTrackbar("LowH", "Control", &iLowH, 179); //Hue (0 - 179)
+	cvCreateTrackbar("HighH", "Control", &iHighH, 179);
+
+	cvCreateTrackbar("LowS", "Control", &iLowS, 255); //Saturation (0 - 255)
+	cvCreateTrackbar("HighS", "Control", &iHighS, 255);
+
+	cvCreateTrackbar("LowV", "Control", &iLowV, 255); //Value (0 - 255)
+	cvCreateTrackbar("HighV", "Control", &iHighV, 255);
+};
