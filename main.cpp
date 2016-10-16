@@ -22,18 +22,18 @@ Mat gOrginalImage,
 	gHSVImage[3],
 	gEqualizationHist[3],
 	gThresholdImage[3];
-//-----------------------BLUE COLOR-----------------------\\		
+//-----------------------RED COLOR-----------------------\\		
 /* H range [0-179]*/
-int iLowH = 86; //94
-int iHighH = 122;
+int iLowH = 120;
+int iHighH = 179;
 
 /* S range [0-255]*/
-int iLowS = 140; 
+int iLowS = 15; 
 int iHighS = 255;
 
 /* V range [0-255]*/
-int iLowV = 92; 
-int iHighV = 232;
+int iLowV = 170; //124 
+int iHighV = 255;
 //---------------------------------------------------------\\	
 /* Image resolution */
 int H_res;
