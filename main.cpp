@@ -22,34 +22,31 @@ Mat gOrginalImage,
 	gHSVImage[3],
 	gEqualizationHist[3],
 	gThresholdImage[3];
-		
+//-----------------------YELLOW COLOR-----------------------\\		
 /* H range [0-179]*/
-int iLowH = 98;
-int iHighH = 122;
+int iLowH = 14;
+int iHighH = 60;
 
 /* S range [0-255]*/
-int iLowS = 140; 
+int iLowS = 70; 
 int iHighS = 255;
 
 /* V range [0-255]*/
-int iLowV = 115; 
-int iHighV = 232;
-
+int iLowV = 131;
+int iHighV = 255;
+//---------------------------------------------------------\\	
 /* Image resolution */
 int H_res;
 int W_res;
 
 /* Median filter */
 unsigned int MedFilter = 3;
-unsigned int StartStop = 0;
 unsigned int temp_pause  = 0;
 
-int main( int argc, char** argv )
+int main(int argc, char** argv)
 {
-	CreateGUI();
-
 	//Load image
-	gOrginalImage = imread("D:/Rozpoznawanie znakow drogowych/TSR-zdjecia/IMG_20160914_175427.jpg");
+	gOrginalImage = imread(*(argv+1));
 
 	if(gOrginalImage.empty())
 	{
@@ -57,6 +54,8 @@ int main( int argc, char** argv )
 		getchar();
 		return -1;
 	}
+
+	CreateGUI();
 
 	//Resize the original image
 	H_res = gOrginalImage.rows;
@@ -84,7 +83,7 @@ int main( int argc, char** argv )
 
 	while(1)
 	{
-		//Threshold the HSV image
+		//Threshold the HSV image - BLUE COLOR
 		inRange(hHSVImageBase, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), gThresholdImage[0]); 
 		imshow("Thresholded image", gThresholdImage[0]); 
 
