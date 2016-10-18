@@ -1,98 +1,77 @@
-#include "main.h"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
+#include <iostream>
+
+#define ImageResizeCoef 4
+
+using namespace cv;
+using namespace std;
+
+void help()
+{
+ cout << "\nThis program demonstrates line finding with the Hough transform.\n"
+         "Usage:\n"
+         "./houghlines <image_name>, Default is pic1.jpg\n" << endl;
+}
 
 int main(int argc, char** argv)
 {
-	//Load image
-	gOrginalImage = imread(*(argv+1));
+ const char* filename = argc >= 2 ? argv[1] : "pic1.jpg";
 
-	if(gOrginalImage.empty())
-	{
-		cout <<"Invalid path to image!" <<endl;
-		getchar();
-		return -1;
-	}
+ Mat src = imread(filename, 0);
+ if(src.empty())
+ {
+     help();
+     cout << "can not open " << filename << endl;
+     return -1;
+ }
 
-	CreateGUI();
+ Mat dst, cdst;
 
-	//StructuringElement - erode and dilate
-	gStructElement3_3 = getStructuringElement(MORPH_RECT, Size(3, 3), Point(1,1));
-	gStructElement5_5 = getStructuringElement(MORPH_RECT, Size(5, 5), Point(1,1));
-
-	//Resize the original image
-	H_res = gOrginalImage.rows;
-	W_res = gOrginalImage.cols;
-	resize(gOrginalImage, gOrginalImage, Size(W_res/ImageResizeCoef, H_res/ImageResizeCoef));
-	imshow("Original image", gOrginalImage); 
-
-	//Image preprocesing
-	split(gOrginalImage, gRGBImage);
-
-	//Histogram equalization
-	equalizeHist(gRGBImage[0], gEqualizationHist[0]);
-	equalizeHist(gRGBImage[1], gEqualizationHist[1]);
-	equalizeHist(gRGBImage[2], gEqualizationHist[2]);
-
-	//Merge 3 matrix into 1 matrix
-	merge(gEqualizationHist, 3, gRGBImage[0]);
-	imshow("Histogram eqaulization", gRGBImage[0]); 
-
-	//Convert image from BGR to HSV
-	cvtColor(gRGBImage[0], hHSVImageBase, CV_BGR2HSV);
-
-	//Split each channel
-	split(hHSVImageBase, gHSVImage);
-
-	//Blur H and S channel for HSV
-	medianBlur(gHSVImage[0],gHSVImage[0],(MedFilter,MedFilter));
-	medianBlur(gHSVImage[1],gHSVImage[1],(MedFilter,MedFilter));
-	merge(gHSVImage, 3, hHSVImageBase);
-	
-	while(1)
-	{
-		//Threshold the HSV image - BLUE COLOR
-		inRange(hHSVImageBase, Scalar(BlueLowH, BlueLowS, BlueLowV), Scalar(BlueHighH, BlueHighS, BlueHighV), gThresholdImage[0]); 
-
-		dilate(gThresholdImage[0], gThresholdImage[0], gStructElement3_3);
-		dilate(gThresholdImage[0], gThresholdImage[0], gStructElement3_3);
-		
-		erode(gThresholdImage[0], gThresholdImage[0], gStructElement3_3);
-		erode(gThresholdImage[0], gThresholdImage[0], gStructElement3_3);
-
-		//Threshold the HSV image - RED COLOR
-		inRange(hHSVImageBase, Scalar(RedLowH, RedLowS, RedLowV), Scalar(RedHighH, RedHighS, RedHighV), gThresholdImage[1]); 
-
-		dilate(gThresholdImage[1], gThresholdImage[1], gStructElement3_3);
-		dilate(gThresholdImage[1], gThresholdImage[1], gStructElement3_3);
-		
-		erode(gThresholdImage[1], gThresholdImage[1], gStructElement3_3);
-		erode(gThresholdImage[1], gThresholdImage[1], gStructElement3_3);
-
-		//Threshold the HSV image - YELLOW COLOR
-		inRange(hHSVImageBase, Scalar(YellowLowH, YellowLowS, YellowLowV), Scalar(YellowHighH, YellowHighS, YellowHighV), gThresholdImage[2]); 
-
-		dilate(gThresholdImage[2], gThresholdImage[2], gStructElement3_3);
-		dilate(gThresholdImage[2], gThresholdImage[2], gStructElement3_3);
-		
-		erode(gThresholdImage[2], gThresholdImage[2], gStructElement3_3);
-		erode(gThresholdImage[2], gThresholdImage[2], gStructElement3_3);
-		
-		//Show results of thresholding
-		imshow("Thresholded image - BLUE SIGNS", gThresholdImage[0]); 
-		imshow("Thresholded image - RED SIGNS", gThresholdImage[1]); 
-		imshow("Thresholded image - YELLOW SIGNS", gThresholdImage[2]); 
+/* Image resolution */
+int H_res;
+int W_res;
 
 
-		if(waitKey(10) == 27) break;
-	}
-    return 0;
+
+//Resize the original image
+H_res = src.rows;
+W_res = src.cols;
+resize(src, src, Size(W_res/ImageResizeCoef, H_res/ImageResizeCoef));
+
+ Canny(src, dst, 100, 200, 3);
+ cvtColor(dst, cdst, CV_GRAY2BGR);
+
+ #if 0
+  vector<Vec2f> lines;
+  HoughLines(dst, lines, 1, CV_PI/180, 100, 0, 0 );
+
+  for( size_t i = 0; i < lines.size(); i++ )
+  {
+     float rho = lines[i][0], theta = lines[i][1];
+     Point pt1, pt2;
+     double a = cos(theta), b = sin(theta);
+     double x0 = a*rho, y0 = b*rho;
+     pt1.x = cvRound(x0 + 1000*(-b));
+     pt1.y = cvRound(y0 + 1000*(a));
+     pt2.x = cvRound(x0 - 1000*(-b));
+     pt2.y = cvRound(y0 - 1000*(a));
+     line( cdst, pt1, pt2, Scalar(0,0,255), 3, CV_AA);
+  }
+ #else
+  vector<Vec4i> lines;
+  HoughLinesP(dst, lines, 1, CV_PI/180, 80, 50, 20);
+  for( size_t i = 0; i < lines.size(); i++ )
+  {
+    Vec4i l = lines[i];
+    line( cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
+  }
+ #endif
+ imshow("source", src);
+ imshow("detected lines", cdst);
+
+ waitKey();
+
+ return 0;
 }
-
-void CreateGUI(void)
-{
-	//Create windows 
-	namedWindow("Original image", WINDOW_AUTOSIZE); 
-	namedWindow("Histogram eqaulization", WINDOW_AUTOSIZE);
-	namedWindow("Thresholded image - BLUE SIGNS", WINDOW_AUTOSIZE); 
-	namedWindow("Thresholded image - RED SIGNS", WINDOW_AUTOSIZE); 
-	namedWindow("Thresholded image - YELLOW SIGNS", WINDOW_AUTOSIZE); 
-};
