@@ -7,7 +7,7 @@ RNG rng(12345);
 int main(int argc, char** argv)
 {
 	//Load image
-	gOrginalImage = imread(*(argv+1));
+	gOrginalImage = imread(argv[1]);
 
 	if(gOrginalImage.empty())
 	{
@@ -109,7 +109,8 @@ int main(int argc, char** argv)
 		for( int i = 0; i< contours.size(); i++ )
 		{
 			stosunekHW = boundRect[i].width/boundRect[i].height;
-			if((boundRect[i].width > 20)&&(boundRect[i].height > 20)&&(boundRect[i].width < 100)&&(boundRect[i].height < 100)&&(0.95 <= stosunekHW)&&(stosunekHW <= 1.05))
+			//if(contours_poly[i].size() == 3)
+			if((boundRect[i].width > 20)&&(boundRect[i].height > 20)&&(boundRect[i].width < 100)&&(boundRect[i].height < 100)&&(0.95 <= stosunekHW)&&(stosunekHW <= 1.05)&&(contours_poly[i].size() >= 3))
 			{
 				Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255));
 				drawContours( drawing, contours_poly, i, color, 1, 8, vector<Vec4i>(), 0, Point());
@@ -121,7 +122,7 @@ int main(int argc, char** argv)
 		namedWindow( "Contours", CV_WINDOW_AUTOSIZE );
 		imshow( "Contours", drawing );
 
-		waitKey(10);
+		waitKey(100);
 		getchar();
 
     return 0;
