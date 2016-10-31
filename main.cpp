@@ -1,91 +1,93 @@
+#include "main.h"
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#include <iostream>
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
+int main(int argc, char** argv)
+{
+	////Load image
+	//gOrginalImage = imread(argv[1], CV_LOAD_IMAGE_COLOR); 
 
-using namespace cv;
-using namespace std;
+	//if(gOrginalImage.empty())
+	//{
+	//	cout <<"Invalid path to image!" <<endl;
+	//	getchar();
+	//	return -1;
+	//}
 
- int main( int argc, char** argv )
- {
-    VideoCapture cap(0); //capture the video from web cam
+	//CreateGUI();
 
-    if ( !cap.isOpened() )  // if not success, exit program
-    {
-         cout << "Cannot open the web cam" << endl;
-         return -1;
-    }
+	VideoCapture cap(0); //capture the video from web cam
 
-    namedWindow("Control", CV_WINDOW_AUTOSIZE); //create a window called "Control"
+	if ( !cap.isOpened() )  // if not success, exit program
+	{
+		cout << "Cannot open the web cam" << endl;
+		return -1;
+	}
+	
+	namedWindow("Test", WINDOW_AUTOSIZE); 
 
- int iLowH = 0;
- int iHighH = 179;
+	bool bSuccess;
 
- int iLowS = 0; 
- int iHighS = 255;
+	while(1)
+	{
+		bSuccess = cap.read(gOrginalImage); // read a new frame from video
 
- int iLowV = 0;
- int iHighV = 255;
+		if (!bSuccess) //if not success, break loop
+		{
+			cout << "Cannot read a frame from video stream" << endl;
+			break;
+		}
 
- //Create trackbars in "Control" window
- cvCreateTrackbar("LowH", "Control", &iLowH, 179); //Hue (0 - 179)
- cvCreateTrackbar("HighH", "Control", &iHighH, 179);
+		split(gOrginalImage, gRGBImage);
+		//Histogram equalization
+		equalizeHist(gRGBImage[0], gEqualizationHist[0]);
+		equalizeHist(gRGBImage[1], gEqualizationHist[1]);
+		equalizeHist(gRGBImage[2], gEqualizationHist[2]);
 
- cvCreateTrackbar("LowS", "Control", &iLowS, 255); //Saturation (0 - 255)
- cvCreateTrackbar("HighS", "Control", &iHighS, 255);
+		//Merge 3 matrix into 1 matrix
+		merge(gEqualizationHist, 3, gRGBImage[0]);
 
- cvCreateTrackbar("LowV", "Control", &iLowV, 255); //Value (0 - 255)
- cvCreateTrackbar("HighV", "Control", &iHighV, 255);
+		Convert2RB(gRGBImage[0], tempMat);
+		imshow("Test", tempMat); 
 
-    while (true)
-    {
-        Mat imgOriginal;
-
-        bool bSuccess = cap.read(imgOriginal); // read a new frame from video
-
-         if (!bSuccess) //if not success, break loop
-        {
-             cout << "Cannot read a frame from video stream" << endl;
-             break;
-        }
-
-  Mat imgHSV;
-  //IplImage* image2 = cvCloneImage(&(IplImage)imgOriginal);
-  
-  cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
- 
-  Mat imgThresholded;	
-
-  inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
-      
-  //morphological opening (remove small objects from the foreground)
-  erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-  dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) ); 
-
-  //morphological closing (fill small holes in the foreground)
-  dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) ); 
-  erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-
-  imshow("Thresholded Image", imgThresholded); //show the thresholded image
-
-    line(imgOriginal,
-         Point2i(0, 0), 
-         Point2i(100, 100), 
-         Scalar(255, 255, 255), 10, 8, CV_AA);
-
-  imshow("Original", imgOriginal); //show the original image
-
-  //line(imgOriginal, Point2i(0,0), Point2i(100,100), cvScalar(255,0,0),4);
-
-        if (waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
-       {
-            cout << "esc key is pressed by user" << endl;
-            break; 
-       }
-    }
-
-   return 0;
-
+		if(waitKey(10) == 27) break;
+	}
+    return 0;
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CreateGUI(void)
+{
+	//Create windows 
+	namedWindow("Original image", WINDOW_AUTOSIZE); 
+	namedWindow("Histogram eqaulization", WINDOW_AUTOSIZE);
+	namedWindow("Thresholded image - BLUE SIGNS", WINDOW_AUTOSIZE); 
+	namedWindow("Thresholded image - RED SIGNS", WINDOW_AUTOSIZE); 
+	namedWindow("Thresholded image - YELLOW SIGNS", WINDOW_AUTOSIZE); 
+};
+
+void Convert2RB(Mat& BGR_Img,  Mat& RB_img)
+{
+	unsigned int i, j;
+	float b, g, r, temp_float,
+				   temp_float2;
+	Mat layers[3];
+
+	RB_img = Mat::zeros(BGR_Img.rows, BGR_Img.cols, CV_8UC1);
+
+	split(BGR_Img, layers);
+
+	for(i = 0; i < BGR_Img.rows; i++)
+	{
+		for(j = 0; j < BGR_Img.cols; j++)
+		{
+
+			b = layers[0].data[ i * layers[0].cols + j];
+			g = layers[1].data[ i * layers[1].cols + j];
+			r = layers[2].data[ i * layers[2].cols + j];
+
+			temp_float2 = b+g+r;
+
+			temp_float = max((r/temp_float2),(b/temp_float2));
+
+			RB_img.data[ i * BGR_Img.cols + j] = (unsigned int)(temp_float*100);
+		}
+	}
+}
