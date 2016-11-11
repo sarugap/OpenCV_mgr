@@ -1,54 +1,106 @@
 #include "main.h"
 
+#define __Image 0
+
+bool bSuccess;
+fstream plik;
+
 int main(int argc, char** argv)
 {
-	////Load image
-	//gOrginalImage = imread(argv[1], CV_LOAD_IMAGE_COLOR); 
+	#if __Image
+	
+		gOrginalImage = imread(argv[1]);
 
-	//if(gOrginalImage.empty())
-	//{
-	//	cout <<"Invalid path to image!" <<endl;
-	//	getchar();
-	//	return -1;
-	//}
+		if(gOrginalImage.empty())
+		{
+			cout <<"Invalid path to image!" <<endl;
+			getchar();
+			return -1;
+		}
+	
+	#else
+	
+		//VideoCapture cap(0); //capture the video from web cam
+		VideoCapture cap(argv[1]); 
+
+		if ( !cap.isOpened() )  // if not success, exit program
+		{
+			cout << "Cannot open the web cam" << endl;
+			return -1;
+		}
+
+		cap.read(gOrginalImage);
+	
+	#endif
 
 	//CreateGUI();
 
-	VideoCapture cap(0); //capture the video from web cam
+	#if __Image
 
-	if ( !cap.isOpened() )  // if not success, exit program
-	{
-		cout << "Cannot open the web cam" << endl;
-		return -1;
-	}
-	
-	namedWindow("Test", WINDOW_AUTOSIZE); 
+		//Resize the original image
+		H_res = gOrginalImage.rows;
+		W_res = gOrginalImage.cols;
+		resize(gOrginalImage, gOrginalImage, Size(W_res/ImageResizeCoef, H_res/ImageResizeCoef));
 
-	bool bSuccess;
+	#endif
+
+	/**/
+		plik.open("dane.txt", std::ios::out);
 
 	while(1)
 	{
-		bSuccess = cap.read(gOrginalImage); // read a new frame from video
+		#if (!__Image)
 
-		if (!bSuccess) //if not success, break loop
-		{
+			bSuccess = cap.read(gOrginalImage); // read a new frame from video
+
+			if (!bSuccess) //if not success, break loop
+			{
 			cout << "Cannot read a frame from video stream" << endl;
 			break;
-		}
+			}
 
-		split(gOrginalImage, gRGBImage);
-		//Histogram equalization
-		equalizeHist(gRGBImage[0], gEqualizationHist[0]);
-		equalizeHist(gRGBImage[1], gEqualizationHist[1]);
-		equalizeHist(gRGBImage[2], gEqualizationHist[2]);
+		#endif
 
-		//Merge 3 matrix into 1 matrix
-		merge(gEqualizationHist, 3, gRGBImage[0]);
+		imshow("Original image", gOrginalImage); 
 
-		Convert2RB(gRGBImage[0], tempMat);
-		imshow("Test", tempMat); 
+		//Image preprocesing
+		split(gOrginalImage, gBGRImage);
 
-		if(waitKey(10) == 27) break;
+		gB_channel = gBGRImage[0];
+		gG_channel = gBGRImage[1];
+		gR_channel = gBGRImage[2];
+
+		//RGB -> CMYK
+		gC_channel = 255 - gR_channel;
+		gM_channel = 255 - gG_channel;
+		gY_channel = 255 - gB_channel;
+		
+		//Virtual channels
+		gREDv_channel = (gR_channel + gM_channel)/2;
+		gBLUEv_channel = (gB_channel + gC_channel)/2;
+		gYELLOWv_channel = (gR_channel + gM_channel + gY_channel)/3;
+		gWHITEv_channel = (gR_channel + gG_channel + gB_channel)/3;
+
+
+		imshow("R", gR_channel);
+		imshow("G", gG_channel); 
+		imshow("B", gB_channel); 
+		imshow("C", gC_channel); 
+		imshow("M", gM_channel); 
+		imshow("Y", gY_channel); 
+		imshow("RED", gREDv_channel); 
+		imshow("BLUE", gBLUEv_channel); 
+		imshow("YELLOW", gYELLOWv_channel); 
+		imshow("WHITE", gWHITEv_channel); 
+
+
+
+		if(waitKey(10) == 27)
+			{
+				//plik << gR_channel;
+				plik.close();
+				break;
+			}
 	}
     return 0;
 }
@@ -57,37 +109,19 @@ void CreateGUI(void)
 {
 	//Create windows 
 	namedWindow("Original image", WINDOW_AUTOSIZE); 
-	namedWindow("Histogram eqaulization", WINDOW_AUTOSIZE);
-	namedWindow("Thresholded image - BLUE SIGNS", WINDOW_AUTOSIZE); 
-	namedWindow("Thresholded image - RED SIGNS", WINDOW_AUTOSIZE); 
-	namedWindow("Thresholded image - YELLOW SIGNS", WINDOW_AUTOSIZE); 
+	//namedWindow("Histogram eqaulization", WINDOW_AUTOSIZE);
+	//namedWindow("Thresholded image - BLUE SIGNS", WINDOW_AUTOSIZE); 
+	//namedWindow("Thresholded image - RED SIGNS", WINDOW_AUTOSIZE); 
+	//namedWindow("Thresholded image - YELLOW SIGNS", WINDOW_AUTOSIZE); 
+	//namedWindow("Thresholded image - WHITE SIGNS", WINDOW_AUTOSIZE); 
+	namedWindow("R", WINDOW_AUTOSIZE);
+	namedWindow("G", WINDOW_AUTOSIZE); 
+	namedWindow("B", WINDOW_AUTOSIZE); 
+	namedWindow("C", WINDOW_AUTOSIZE); 
+	namedWindow("M", WINDOW_AUTOSIZE); 
+	namedWindow("Y", WINDOW_AUTOSIZE); 
+	namedWindow("RED", WINDOW_AUTOSIZE); 
+	namedWindow("BLUE", WINDOW_AUTOSIZE); 
+	namedWindow("YELLOW", WINDOW_AUTOSIZE); 
+	namedWindow("WHITE", WINDOW_AUTOSIZE); 
 };
-
-void Convert2RB(Mat& BGR_Img,  Mat& RB_img)
-{
-	unsigned int i, j;
-	float b, g, r, temp_float,
-				   temp_float2;
-	Mat layers[3];
-
-	RB_img = Mat::zeros(BGR_Img.rows, BGR_Img.cols, CV_8UC1);
-
-	split(BGR_Img, layers);
-
-	for(i = 0; i < BGR_Img.rows; i++)
-	{
-		for(j = 0; j < BGR_Img.cols; j++)
-		{
-
-			b = layers[0].data[ i * layers[0].cols + j];
-			g = layers[1].data[ i * layers[1].cols + j];
-			r = layers[2].data[ i * layers[2].cols + j];
-
-			temp_float2 = b+g+r;
-
-			temp_float = max((r/temp_float2),(b/temp_float2));
-
-			RB_img.data[ i * BGR_Img.cols + j] = (unsigned int)(temp_float*100);
-		}
-	}
-}
