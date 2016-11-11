@@ -75,8 +75,8 @@ int RedLowV = 170; //124
 int RedHighV = 255;	
 //-----------------------YELLOW COLOR-----------------------\\		
 /* H range [0-179]*/
-int YellowLowH = 10;//14
-int YellowHighH = 70;//60
+int YellowLowH = 20;//14
+int YellowHighH = 80;//60
 
 /* S range [0-255]*/
 int YellowLowS = 0;//70 

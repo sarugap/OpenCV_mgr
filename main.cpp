@@ -66,6 +66,8 @@ int main(int argc, char** argv)
 		//Image preprocesing
 		split(gOrginalImage, gBGRImage);
 
+		cvtColor(gOrginalImage, hHSVImageBase, CV_BGR2HSV);
+
 		gB_channel = gBGRImage[0];
 		gG_channel = gBGRImage[1];
 		gR_channel = gBGRImage[2];
@@ -78,22 +80,14 @@ int main(int argc, char** argv)
 		//Virtual channels
 		gREDv_channel = (gR_channel + gM_channel)/2;
 		gBLUEv_channel = (gB_channel + gC_channel)/2;
-		gYELLOWv_channel = (gR_channel + gM_channel + gY_channel)/3;
+		gYELLOWv_channel = (0.4*gR_channel + 0.1*gM_channel + 0.5*gY_channel);
 		gWHITEv_channel = (gR_channel + gG_channel + gB_channel)/3;
 
 
-	/*	imshow("R", gR_channel);
-		imshow("G", gG_channel); 
-		imshow("B", gB_channel); 
-		imshow("C", gC_channel); 
-		imshow("M", gM_channel); 
-		imshow("Y", gY_channel); */
 		imshow("RED", gREDv_channel); 
 		imshow("BLUE", gBLUEv_channel); 
 		imshow("YELLOW", gYELLOWv_channel); 
 		imshow("WHITE", gWHITEv_channel); 
-
-
 
 		if(waitKey(10) == 27)
 			{
@@ -109,17 +103,6 @@ void CreateGUI(void)
 {
 	//Create windows 
 	namedWindow("Original image", WINDOW_AUTOSIZE); 
-	//namedWindow("Histogram eqaulization", WINDOW_AUTOSIZE);
-	//namedWindow("Thresholded image - BLUE SIGNS", WINDOW_AUTOSIZE); 
-	//namedWindow("Thresholded image - RED SIGNS", WINDOW_AUTOSIZE); 
-	//namedWindow("Thresholded image - YELLOW SIGNS", WINDOW_AUTOSIZE); 
-	//namedWindow("Thresholded image - WHITE SIGNS", WINDOW_AUTOSIZE); 
-/*	namedWindow("R", WINDOW_AUTOSIZE);
-	namedWindow("G", WINDOW_AUTOSIZE); 
-	namedWindow("B", WINDOW_AUTOSIZE); 
-	namedWindow("C", WINDOW_AUTOSIZE); 
-	namedWindow("M", WINDOW_AUTOSIZE); 
-	namedWindow("Y", WINDOW_AUTOSIZE); */
 	namedWindow("RED", WINDOW_AUTOSIZE); 
 	namedWindow("BLUE", WINDOW_AUTOSIZE); 
 	namedWindow("YELLOW", WINDOW_AUTOSIZE); 
