@@ -13,6 +13,20 @@ void CreateGUI(void);
 void Convert2RB(Mat& Input,  Mat& Output);
 void EqualizeHist(Mat& Input,  Mat& Output);
 
+struct ImgStruct
+{
+	Mat HSV_channel[3];
+	Mat BGR_channel[3];
+	Mat CMY_channel[3];
+	Mat H_channel;
+	Mat S_channel;
+	Mat V_channel;
+	Mat HSV_thr[3];
+	Mat temp[3];
+};
+
+ImgStruct RedImg, BlueImg, YellowImg, WhiteImg;
+
 Mat gOrginalImage,
 	gGreyImage,
 	gGaussBlurImage,
@@ -37,29 +51,17 @@ Mat gOrginalImage,
 	gStructElement5_5,
 	tempMat;
 //-----------------------BLUE COLOR-----------------------\\		
-///* H range [0-179]*/
-//int BlueLowH = 86; //94
-//int BlueHighH = 122;
-//
-///* S range [0-255]*/
-//int BlueLowS = 140; 
-//int BlueHighS = 255;
-//
-///* V range [0-255]*/
-//int BlueLowV = 92; 
-//int BlueHighV = 232;
-
 /* H range [0-179]*/
-int BlueLowH = 70;
-int BlueHighH = 130;
+int BlueLowH = 90;//100
+int BlueHighH = 140;
 
 /* S range [0-255]*/
-int BlueLowS = 0;//120 
+int BlueLowS = 110;//120 //65 //90
 int BlueHighS = 255;
 
 /* V range [0-255]*/
-int BlueLowV = 92; 
-int BlueHighV = 232;
+int BlueLowV = 40; 
+int BlueHighV = 250; //230
 
 //-----------------------RED COLOR-----------------------\\		
 /* H range [0-179]*/
@@ -75,15 +77,15 @@ int RedLowV = 170; //124
 int RedHighV = 255;	
 //-----------------------YELLOW COLOR-----------------------\\		
 /* H range [0-179]*/
-int YellowLowH = 20;//14
-int YellowHighH = 80;//60
+int YellowLowH = 5;//14
+int YellowHighH = 30;//60//25
 
 /* S range [0-255]*/
-int YellowLowS = 0;//70 
+int YellowLowS = 60;//70 
 int YellowHighS = 255;
 
 /* V range [0-255]*/
-int YellowLowV = 131;
+int YellowLowV = 70;//110
 int YellowHighV = 255;
 //-----------------------WHITE COLOR-----------------------\\		
 /* H range [0-179]*/
