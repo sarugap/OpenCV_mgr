@@ -28,11 +28,12 @@ struct ImgStruct
 ImgStruct RedImg, BlueImg, YellowImg, WhiteImg;
 
 Mat gOrginalImage,
-	gGreyImage,
+	gGrayImage,
 	gGaussBlurImage,
 	gCannyEdgeImage,
 	gColor_dst,
 	hHSVImageBase,
+	hHSLImageBase,
 	gBGRImage[3],
 	gR_channel,
 	gG_channel,
@@ -45,6 +46,7 @@ Mat gOrginalImage,
 	gYELLOWv_channel,
 	gWHITEv_channel,
 	gHSVImage[3],
+	gHSLImage[3],
 	gEqualizationHist[3],
 	gThresholdImage[4],
 	gStructElement3_3,
@@ -65,16 +67,21 @@ int BlueHighV = 250; //230
 
 //-----------------------RED COLOR-----------------------\\		
 /* H range [0-179]*/
-int RedLowH = 120;//120
-int RedHighH = 179;
+int RedLowH1 = 0;//120
+int RedHighH1 = 15;
+
+/* H range [0-179]*/
+int RedLowH2 = 170;//120
+int RedHighH2 = 179;
 
 /* S range [0-255]*/
-int RedLowS = 15; 
+int RedLowS = 120; 
 int RedHighS = 255;
 
 /* V range [0-255]*/
-int RedLowV = 170; //124 
-int RedHighV = 255;	
+int RedLowV = 65; //124 
+int RedHighV = 250;	
+
 //-----------------------YELLOW COLOR-----------------------\\		
 /* H range [0-179]*/
 int YellowLowH = 5;//14
@@ -93,12 +100,12 @@ int WhiteLowH = 0;
 int WhiteHighH = 180;
 
 /* S range [0-255]*/
-int WhiteLowS = 0; 
-int WhiteHighS = 70;
+int WhiteLowS = 80; 
+int WhiteHighS = 255;
 
 /* V range [0-255]*/
-int WhiteLowV = 220;
-int WhiteHighV = 255;
+int WhiteLowV = 0;
+int WhiteHighV = 50;
 //---------------------------------------------------------\\	
 
 /* Image resolution */
