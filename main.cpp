@@ -1,11 +1,10 @@
 #include "main.h"
+#include "matlab_fcn.h"
 #include <algorithm>
 
 char file_path[512];
 
 fstream fOriginalImg, fB_channel, fG_channel, fR_channel;
-
-void imadjust(Mat& SRC, Mat& DST, float x1, float x2, float y1, float y2);
 
 int main(int argc, char** argv)
 {
@@ -24,10 +23,8 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	//Zmiana rozmiaru obrazu
-	H_res = gOrginalImage.rows;
-	W_res = gOrginalImage.cols;
-	//resize(gOrginalImage, gOrginalImage, Size(W_res/ImageResizeCoef, H_res/ImageResizeCoef));
+	//Przycinanie obrazu
+	ImCropp(gOrginalImage, gOrginalImage, Top_X, Top_Y, Bottom_X, Bottom_Y);
 
 	//Konwersja obrazu
 	gOrginalImage.convertTo(gOrginalImage, CV_32FC3); 
@@ -36,9 +33,9 @@ int main(int argc, char** argv)
 	//Rozdzielenie kanalow B, G, R
 	split(gOrginalImage, gBGRImage);
 	
-	imadjust(gBGRImage[2], gR_ch_main, 0.5, 1, 0, 1);
-	imadjust(gBGRImage[1], gG_ch_main, 0.5, 1, 0, 1);
-	imadjust(gBGRImage[0], gB_ch_main, 0.5, 1, 0, 1);
+	ImAdjust(gBGRImage[2], gR_ch_main, 0.5, 1, 0, 1);
+	ImAdjust(gBGRImage[1], gG_ch_main, 0.5, 1, 0, 1);
+	ImAdjust(gBGRImage[0], gB_ch_main, 0.5, 1, 0, 1);
 	
 
 	//CZERWONE ZNAKI	[img_red = r_h.*(1-g).*(1-b)]
@@ -77,7 +74,6 @@ int main(int argc, char** argv)
 	gW_channel.convertTo(gW_channel, CV_8UC1, 255);
 	gK_channel.convertTo(gK_channel, CV_8UC1, 255);
 	
-
 	//Zapis obrazow na dysk
 	memset(file_path, 0, sizeof(file_path));
 	sprintf(file_path, "C:/Users/Pawel/Desktop/baza_znakow/Red.jpg");
@@ -107,21 +103,4 @@ int main(int argc, char** argv)
 	fOriginalImg.close();
 
     return 0;
-}
-
-void imadjust(Mat& SRC, Mat& DST, float x1, float x2, float y1, float y2) 
-{
-	float temp_a, temp_b;
-
-	temp_a = (y2-y1)/(x2-x1);
-	temp_b = (y1*x2-y2*x1)/(x2-x1);
-
-	DST = temp_a * SRC + temp_b;
-	
-	DST = DST*255;
-
-	DST.convertTo(DST, CV_8U); 
-	DST.convertTo(DST, CV_32F);
-
-	DST = DST/255;
 }
