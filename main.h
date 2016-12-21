@@ -5,8 +5,6 @@
 #include <iostream>
 #include <fstream>
 
-#define ImageResizeCoef 4
-
 using namespace cv;
 using namespace std;
 
@@ -25,10 +23,6 @@ Mat gOrginalImage,
 	gG_channel,
 	gB_channel,
 	gW_channel,
-	gK_channel, //black
+	gK_channel, //czarny kanal
 	gY_channel,
 	temp[3];
-
-/* Image resolution */
-int H_res;
-int W_res;
