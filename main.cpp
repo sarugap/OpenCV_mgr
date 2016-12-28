@@ -4,8 +4,13 @@
 
 #define SIMPLE_IMG		0
 
+#define MSER_DELTA			5
+#define MSER_MIN_AREA		1000
+#define MSER_MAX_AREA		15000
+#define MSER_VARIATION		0.2
+
 RNG rng(12345);
-char file_path[256];
+char file_path[256], tempString[100];
 fstream fOriginalImg, fB_channel, fG_channel, fR_channel;
 
 //Praca na pojedynczym obrazie
@@ -78,13 +83,8 @@ int main(int argc, char** argv)
 	
 //	MSER
 	{
-		MSER ms_red(2, 1000, 15000, 0.01);
-/*
-		  MSER( int _delta=5, int _min_area=60, int _max_area=14400,
-          double _max_variation=0.25, double _min_diversity=.2,
-          int _max_evolution=200, double _area_threshold=1.01,
-          double _min_margin=0.003, int _edge_blur_size=5 );
-*/
+		MSER ms_red(MSER_DELTA, MSER_MIN_AREA, MSER_MAX_AREA, MSER_VARIATION);
+
 		vector<vector<Point>> regions_red;
 		vector<Point> temp_vect;
 		ms_red(gR_channel, regions_red, Mat());
@@ -241,15 +241,24 @@ int main(int argc, char** argv)
 		gW_channel.convertTo(gW_channel, CV_8UC1, 255);
 		gK_channel.convertTo(gK_channel, CV_8UC1, 255);
 		
-	//	MSER
+		int w(gR_channel.cols);
+		int h(gR_channel.rows);
+
+		Mat dst(5*w, 5*h, CV_8UC3);
+
+		temp[0].zeros(gR_channel.rows, gR_channel.cols, CV_8UC1);
+		temp[0] = gR_channel;
+
+		gOrginalImage = gOrginalImage * 255;
+		gOrginalImage.convertTo(gOrginalImage, CV_8UC3); 
+
+		//Wyciecie pierwszego okna
+		gOrginalImage.copyTo(dst(Rect(0, 0, w, h)));
+
+		//MSER 1
 		{
-			MSER ms_red(5, 1000, 15000, 0.2);
-	/*
-			  MSER( int _delta=5, int _min_area=60, int _max_area=14400,
-			  double _max_variation=0.25, double _min_diversity=.2,
-			  int _max_evolution=200, double _area_threshold=1.01,
-			  double _min_margin=0.003, int _edge_blur_size=5 );
-	*/
+			MSER ms_red(MSER_DELTA, MSER_MIN_AREA, MSER_MAX_AREA, MSER_VARIATION);
+
 			vector<vector<Point>> regions_red;
 			vector<Point> temp_vect;
 			ms_red(gR_channel, regions_red, Mat());
@@ -267,28 +276,83 @@ int main(int argc, char** argv)
 				}
 
 			}
+
+			gR_channel.copyTo(dst(Rect(0, h, w, h)));
 		}
 
+		//MSER 2
+		{
+			gR_channel.zeros(gR_channel.rows, gR_channel.cols, CV_8UC1);
+			gR_channel = temp[0];
+			MSER ms_red(MSER_DELTA, MSER_MIN_AREA, MSER_MAX_AREA, MSER_VARIATION+0.1);
+
+			vector<vector<Point>> regions_red;
+			vector<Point> temp_vect;
+			ms_red(gR_channel, regions_red, Mat());
+
+			cvtColor(gR_channel, gR_channel, COLOR_GRAY2BGR);
+
+			for (int i = 0; i < regions_red.size(); i++)
+			{
+				Scalar color = Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
+				temp_vect = regions_red[i];
+
+				for(int j =0; j < regions_red[i].size() ; j++)
+				{
+					circle( gR_channel, temp_vect[j], 1,  color, -1, 8);
+				}
+
+			}
+
+			gR_channel.copyTo(dst(Rect(w, 0, w, h)));
+		}
+
+		//MSER 2
+		{
+			gR_channel.zeros(gR_channel.rows, gR_channel.cols, CV_8UC1);
+			gR_channel = temp[0];
+			MSER ms_red(MSER_DELTA, MSER_MIN_AREA, MSER_MAX_AREA, MSER_VARIATION+0.2);
+
+			vector<vector<Point>> regions_red;
+			vector<Point> temp_vect;
+			ms_red(gR_channel, regions_red, Mat());
+
+			cvtColor(gR_channel, gR_channel, COLOR_GRAY2BGR);
+
+			for (int i = 0; i < regions_red.size(); i++)
+			{
+				Scalar color = Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
+				temp_vect = regions_red[i];
+
+				for(int j =0; j < regions_red[i].size() ; j++)
+				{
+					circle( gR_channel, temp_vect[j], 1,  color, -1, 8);
+				}
+
+			}
+
+			gR_channel.copyTo(dst(Rect(w, h, w, h)));
+		}
+/*
 		cvtColor(gB_channel, gB_channel, COLOR_GRAY2BGR);
 		cvtColor(gY_channel, gY_channel, COLOR_GRAY2BGR);
 		cvtColor(gW_channel, gW_channel, COLOR_GRAY2BGR);
-
-
-		int w(gR_channel.cols);
-		int h(gR_channel.rows);
-
-		Mat dst(5*w, 5*h, CV_8UC3);
-
-		gR_channel.copyTo(dst(Rect(0, 0, w, h)));
-		gB_channel.copyTo(dst(Rect(0, h, w, h)));
-		gY_channel.copyTo(dst(Rect(w, 0, w, h)));
-		gW_channel.copyTo(dst(Rect(w, h, w, h)));
-
+*/		
 		ImCropp(dst, dst, 0, 0, 2*w, 2*h);
 
-		//Mat roi = gR_channel( Rect(150,50,150,250) );
+		putText(dst, "Original Image", Point2f(50,50), FONT_HERSHEY_SIMPLEX, 1,  Scalar(0,0,255,255), 2);
+		
+		sprintf(tempString, "MSER(delta= %d, min_area= %d, max_area= %d, max_variation= %0.2f)", MSER_DELTA, MSER_MIN_AREA, MSER_MAX_AREA, MSER_VARIATION);
+		putText(dst, tempString, Point2f(50,50+h), FONT_HERSHEY_SIMPLEX, 1,  Scalar(0,0,255,255), 2);
+		memset(tempString, 0, sizeof(tempString));
 
-		//cout << gR_channel.size() << endl;
+		sprintf(tempString, "MSER(delta= %d, min_area= %d, max_area= %d, max_variation= %0.2f)", MSER_DELTA, MSER_MIN_AREA, MSER_MAX_AREA, MSER_VARIATION+0.1);
+		putText(dst, tempString, Point2f(50+w,50), FONT_HERSHEY_SIMPLEX, 1,  Scalar(0,0,255,255), 2);
+		memset(tempString, 0, sizeof(tempString));
+
+		sprintf(tempString, "MSER(delta= %d, min_area= %d, max_area= %d, max_variation= %0.2f)", MSER_DELTA, MSER_MIN_AREA, MSER_MAX_AREA, MSER_VARIATION+0.2);
+		putText(dst, tempString, Point2f(50+w,50+h), FONT_HERSHEY_SIMPLEX, 1,  Scalar(0,0,255,255), 2);
+		memset(tempString, 0, sizeof(tempString));
 
 		cout << "--------------------------WRITE IMAGE--------------------" << endl;
 
