@@ -5,8 +5,8 @@
 
 #define SIMPLE_IMG			0
 
-#define MSER_RED			0
-#define MSER_BLUE			1
+#define MSER_RED			1
+#define MSER_BLUE			0
 #define MSER_YELLOW			0
 #define MSER_WHITE			0
 #define MSER_BLACK			0
@@ -191,8 +191,13 @@ int main(int argc, char** argv)
 	cout << "Image name: ";
 	cin >> file_name;
 
+	#if MSER_RED
+		printf("Default MSER (red): %d, %d, %d, %.2f\r\n", MSER_DELTA_RED, MSER_MIN_AREA_RED, MSER_MAX_AREA_RED, MSER_VARIATION_RED);
+	#endif
 
-	printf("Default MSER (blue): %d, %d, %d, %.2f\r\n", MSER_DELTA_BLUE, MSER_MIN_AREA_BLUE, MSER_MAX_AREA_BLUE, MSER_VARIATION_BLUE);
+	#if MSER_BLUE
+		printf("Default MSER (blue): %d, %d, %d, %.2f\r\n", MSER_DELTA_BLUE, MSER_MIN_AREA_BLUE, MSER_MAX_AREA_BLUE, MSER_VARIATION_BLUE);
+	#endif
 
 	cout << "MSER parameters: ";
 	cin >> mser_param;
@@ -214,20 +219,44 @@ int main(int argc, char** argv)
 			}
 			else if(mser_param[i] == 0)
 			{
-				MSER_VARIATION_BLUE = atof(temp_string);
+				#if MSER_RED
+					MSER_VARIATION_RED = atof(temp_string);
+				#endif
+
+				#if MSER_BLUE
+					MSER_VARIATION_BLUE = atof(temp_string);
+				#endif
 			}
 			else
 			{
 				switch (j)
 				{
 					case 0:
-						MSER_DELTA_BLUE = atoi(temp_string);
+						#if MSER_RED
+							MSER_DELTA_RED = atoi(temp_string);
+						#endif
+
+						#if MSER_BLUE
+							MSER_DELTA_BLUE = atoi(temp_string);
+						#endif
 						break;
 					case 1:
-						MSER_MIN_AREA_BLUE = atoi(temp_string);
+						#if MSER_RED
+							MSER_MIN_AREA_RED = atoi(temp_string);
+						#endif
+
+						#if MSER_BLUE
+							MSER_MIN_AREA_BLUE = atoi(temp_string);
+						#endif
 						break;
 					case 2:
-						MSER_MAX_AREA_BLUE = atoi(temp_string);
+						#if MSER_RED
+							MSER_MAX_AREA_RED = atoi(temp_string);
+						#endif
+
+						#if MSER_BLUE
+							MSER_MAX_AREA_BLUE = atoi(temp_string);
+						#endif
 						break;
 				}
 				memset(temp_string, 0, sizeof(temp_string));
@@ -237,7 +266,13 @@ int main(int argc, char** argv)
 		}
 	}
 	
-	printf("%d, %d, %d, %.2f\r\n", MSER_DELTA_BLUE, MSER_MIN_AREA_BLUE, MSER_MAX_AREA_BLUE, MSER_VARIATION_BLUE);
+	#if MSER_RED
+		printf("%d, %d, %d, %.2f\r\n", MSER_DELTA_RED, MSER_MIN_AREA_RED, MSER_MAX_AREA_RED, MSER_VARIATION_RED);
+	#endif
+
+	#if MSER_BLUE
+		printf("%d, %d, %d, %.2f\r\n", MSER_DELTA_BLUE, MSER_MIN_AREA_BLUE, MSER_MAX_AREA_BLUE, MSER_VARIATION_BLUE);
+	#endif
 	
 	memcpy(string_temp, file_path_in, sizeof(file_path_in));
 
@@ -259,11 +294,7 @@ int main(int argc, char** argv)
 		if(gOrginalImage.empty())
 		{
 			cout <<"Invalid path to image!" <<endl;
-			return -1;
-	/*		
-			system("shutdown -f");
-			system("shutdown -s");
-	*/		
+			return -1;	
 		}
 
 		//Konwersja obrazu
@@ -357,14 +388,6 @@ int main(int argc, char** argv)
 		
 		sprintf(tempString, "MSER(delta= %d, min_area= %d, max_area= %d, max_variation= %0.2f)", MSER_DELTA_RED, MSER_MIN_AREA_RED, MSER_MAX_AREA_RED, MSER_VARIATION_RED);
 		putText(dst, tempString, Point2f(50,50+h), FONT_HERSHEY_SIMPLEX, 1,  Scalar(0,0,255,255), 2);
-		memset(tempString, 0, sizeof(tempString));
-
-		sprintf(tempString, "MSER(delta= %d, min_area= %d, max_area= %d, max_variation= %0.2f)", MSER_DELTA_RED, MSER_MIN_AREA_RED, MSER_MAX_AREA_RED, MSER_VARIATION_RED);
-		putText(dst, tempString, Point2f(50+w,50), FONT_HERSHEY_SIMPLEX, 1,  Scalar(0,0,255,255), 2);
-		memset(tempString, 0, sizeof(tempString));
-
-		sprintf(tempString, "MSER(delta= %d, min_area= %d, max_area= %d, max_variation= %0.2f)", MSER_DELTA_RED, MSER_MIN_AREA_RED, MSER_MAX_AREA_RED, MSER_VARIATION_RED);
-		putText(dst, tempString, Point2f(50+w,50+h), FONT_HERSHEY_SIMPLEX, 1,  Scalar(0,0,255,255), 2);
 		memset(tempString, 0, sizeof(tempString));
 
 		cout << "--------------------------WRITE IMAGE--------------------" << endl;
