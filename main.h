@@ -1,3 +1,6 @@
+#ifndef MAIN_H
+#define MAIN_H
+
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "opencv2/features2d/features2d.hpp"
@@ -5,24 +8,21 @@
 #include <iostream>
 #include <fstream>
 
-using namespace cv;
-using namespace std;
+#define MSER_RED					0
+#define MSER_BLUE					1
+#define MSER_YELLOW					2
+#define MSER_WHITE					3
+#define MSER_BLACK					4
 
-Mat gOrginalImage,
-	gGrayImage,
-	gGaussBlurImage,
-	gCannyEdgeImage,
-	gColor_dst,
-	hHSVImageBase,
-	hHSLImageBase,
-	gBGRImage[3],
-	gR_ch_main,
-	gG_ch_main,
-	gB_ch_main,
-	gR_channel,
-	gG_channel,
-	gB_channel,
-	gW_channel,
-	gK_channel, //czarny kanal
-	gY_channel,
-	temp[3];
+using namespace std;
+using namespace cv;
+
+struct _tMSER
+{
+	unsigned int DELTA;
+	unsigned int MIN_AREA;
+	unsigned int MAX_AREA;
+	float VARIATION;
+};
+
+#endif
